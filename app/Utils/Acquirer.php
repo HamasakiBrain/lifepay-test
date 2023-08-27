@@ -19,7 +19,7 @@ abstract class Acquirer
     public const PAYMENT_TYPE = '';
     public const LIFEPAY = 'life-pay';
 
-    public const ACQUIRES = [
+    public const ACQUIRERS = [
       self::LIFEPAY => LifePayService::class
     ];
 
@@ -39,7 +39,7 @@ abstract class Acquirer
      */
     public static function instance(string $acqName = self::LIFEPAY): self
     {
-        $class = Arr::get(self::ACQUIRES, $acqName, '');
+        $class = Arr::get(self::ACQUIRERS, $acqName, '');
 
         if(!$class) {
             new \Exception('Unkown Acquirer');
