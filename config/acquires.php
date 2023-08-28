@@ -8,5 +8,7 @@
  */
 return [
     'payment_success' => 'https://localhost',
-
+    'lifepay' => [
+        'token' => env('LIFEPAY_TOKEN'),
+    ]
 ];

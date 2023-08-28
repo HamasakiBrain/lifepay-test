@@ -9,6 +9,7 @@
 namespace App\Utils;
 
 use App\Models\AcquirerInfo;
+use App\Models\Booking;
 use App\Services\LifePayService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,7 +40,7 @@ abstract class Acquirer
      */
     public static function instance(string $acqName = self::LIFEPAY): self
     {
-        $class = Arr::get(self::ACQUIRERS, $acqName, '');
+        $class = Arr::get(self::ACQUIRERS, $acqName, "");
 
         if(!$class) {
             new \Exception('Unkown Acquirer');
@@ -68,9 +69,9 @@ abstract class Acquirer
      * Подтверждение выполнения заказа от эквайера
      * отправка эквайером уведомления об изменение заказа
      * @param Request $request
-     * @return Response
+     * @return bool
      */
-    public abstract function confirmation(Request $request) : Response;
+    public abstract function confirmation(Request $request) : bool;
 
     /**
      * Проверка статуса выполнения заказа в системы эквайера
@@ -108,7 +109,7 @@ abstract class Acquirer
      */
     protected function bookingUpdate(int $booking, bool $paid = true): bool
     {
-        return true;
+       return true;
     }
 
     /**
@@ -120,8 +121,7 @@ abstract class Acquirer
         return config('app.url')
             . '/' .
             config(static::SUCCESS_URL_CONF_ALIAS, '/success/default')
-            . self::getAcquirerParam()
-            ;
+            . self::getAcquirerParam();
     }
 
     /**
@@ -133,8 +133,7 @@ abstract class Acquirer
         return config('app.url')
             . '/' .
             config(static::ERROR_URL_CONF_ALIAS, '/error/default')
-            . self::getAcquirerParam()
-            ;
+            . self::getAcquirerParam();
     }
 
     /**
@@ -153,7 +152,7 @@ abstract class Acquirer
      * @param string $suffix
      * @return string
      */
-    public static function generateOrderNumber(int $id, string $prefix, string $suffix) : string
+    public static function generateOrderNumber(int $id, string $prefix = '', string $suffix = '') : string
     {
         return $prefix . '_' . $id . '_' . $suffix;
     }

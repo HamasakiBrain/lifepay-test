@@ -1,5 +1,7 @@
 <?php
 
+use App\Utils\Acquirer;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,8 +15,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return ['Laravel' => app()->version()];
+Route::get('/', function (Request $request) {
+//    return ['Laravel' => app()->version()];
+    $customAcquirer = Acquirer::instance('life-pay');
+    $paymentLink = $customAcquirer->cancelPayment(1);
 });
 
 require __DIR__.'/auth.php';
+
+
+Route::get('/payment/status/update', fn (Request $request) => $request->number)->name('payment.status.update');
