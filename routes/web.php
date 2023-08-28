@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function (Request $request) {
-//    return ['Laravel' => app()->version()];
     $customAcquirer = Acquirer::instance('life-pay');
-    $paymentLink = $customAcquirer->cancelPayment(1);
+    $paymentLink = $customAcquirer->payLink(1);
+    dd($paymentLink);
 });
 
 require __DIR__.'/auth.php';

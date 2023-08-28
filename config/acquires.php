@@ -7,8 +7,9 @@
  * Time: 00:11
  */
 return [
-    'payment_success' => 'https://localhost',
+    'payment_success' => 'success',
     'lifepay' => [
         'token' => env('LIFEPAY_TOKEN'),
+        'login' => env('LIFEPAY_LOGIN')
     ]
 ];

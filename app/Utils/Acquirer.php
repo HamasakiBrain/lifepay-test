@@ -17,7 +17,7 @@ use Illuminate\Support\Arr;
 
 abstract class Acquirer
 {
-    public const PAYMENT_TYPE = '';
+    public const PAYMENT_TYPE = 'life-pay';
     public const LIFEPAY = 'life-pay';
 
     public const ACQUIRERS = [

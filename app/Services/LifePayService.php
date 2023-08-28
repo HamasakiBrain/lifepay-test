@@ -15,6 +15,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Psr\Http\Client\ClientExceptionInterface;
 
 class LifePayService extends Acquirer
 {
@@ -22,43 +23,42 @@ class LifePayService extends Acquirer
 
     private string $API_URL = 'https://api.life-pay.ru/v1/';
     private string $API_TOKEN;
+    private string $LOGIN;
     public function __construct()
     {
         $this->API_TOKEN = config('acquires.lifepay.token');
+        $this->LOGIN = config('acquires.lifepay.login');
     }
 
 
 
     public function payLink(int $booking, string $acqName = self::LIFEPAY): Response
     {
-        $foundBooking = Booking::firstOrFail(['id', 'description', 'amount', 'method'], $booking);
+        $foundBooking = Booking::firstOrFail(['id', 'description', 'amount', 'method', 'customer_email', 'customer_phone'], $booking);
         $data = [
             'amount' => $foundBooking->amount,
+            'customer_phone' => $foundBooking->customer_phone,
+            'customer_email' => $foundBooking->customer_email,
             'description' => $foundBooking->description,
-            'method' => $foundBooking->method,
-            'customer_email' => $foundBooking->customer_email ?? '',
-            'number' => self::generateOrderNumber($foundBooking->id, 'lifePay', 'LP'),
         ];
-
-        if($foundBooking->method == 'mobileCommerce') { // В случае использования метода оплаты mobileCommerce, аттрибут customer_phone является обязательным, в ином случае аттрибут обязательным не является.
-            $data['customer_phone'] = $foundBooking->customer_phone;
-        }
-
 
         if($foundBooking->status === 'success')
             return route('payment.status.update', ['number' => $data['number']]);
 
-        $request = $this->sendRequest('bill', 'POST', $data);
+        $request = json_decode($this->sendRequest('bill', 'POST', $data), true);
 
-        AcquirerInfo::firstOrNew(['booking_id' => $foundBooking->id], [
-            'acquirer' => $acqName,
-            'acquirerNumber' => $request['data']['number'],
-        ]);
+        if(isset($request['data']['number'])) {
+            AcquirerInfo::firstOrNew(['booking_id' => $foundBooking->id], [
+                'acquirer' => $acqName,
+                'acquirerNumber' => $request['data']['number'],
+            ]);
+        }
+
 
         if($request['code'] === 0) {
             return $request['data']['paymentUrl'];
         }
-        return $request['message'];
+        return response($request);
     }
 
     public function confirmation(Request $request): bool
@@ -97,19 +97,20 @@ class LifePayService extends Acquirer
     {
 
         $url = $this->API_URL
-            . '/' . $apiMethod
+            . $apiMethod
             . '?apiKey=' . $this->API_TOKEN
+            . '&login=' . config('acquires.lifepay.login')
             .  http_build_query($params); // Формируем URL запроса
         $clientRequest = new Client(['verify' => false]); // Отключаем проверку на SSL
 
-        $request = new \GuzzleHttp\Psr7\Request($method, $url, [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-        ], json_encode($data));
+        $data['apikey'] = $this->API_TOKEN;
+        $data['login'] = $this->LOGIN;
+
+        $request = new \GuzzleHttp\Psr7\Request($method, $url, [], json_encode($data));
 
         try {
-            $response = $clientRequest->send($request);
-        } catch (\Exception $e) {
+            $response = $clientRequest->sendRequest($request);
+        } catch (\Exception | ClientExceptionInterface $e) {
           throw new \Exception($e->getMessage());
         }
         return $response->getBody()->getContents();

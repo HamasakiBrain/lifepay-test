@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('status');
             $table->string('description')->nullable();
-            $table->integer('amount');
+            $table->float('amount', 5);
             $table->string('method');
             $table->string('customer_phone')->nullable();
             $table->string('customer_email')->nullable();
